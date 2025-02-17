@@ -1,21 +1,29 @@
 import { JSONContent } from "@tiptap/core";
-import { TaskItem, TaskList, NodeVisitor } from "../../types";
 import { ContentItem } from "../../../domain/types";
+import { NodeVisitor } from "../../types";
 
-export abstract class BaseContentVisitor<T extends ContentItem = ContentItem>
+export abstract class BaseContentVisitor<T extends ContentItem>
   implements NodeVisitor
 {
   protected items: T[] = [];
 
-  abstract visitTaskList(node: typeof TaskList): void;
-  abstract visitTaskItem(node: typeof TaskItem): void;
-  abstract visitText(node: JSONContent): void;
+  visitTaskList(node: JSONContent): void {
+    // Base implementation does nothing
+  }
+
+  visitTaskItem(node: JSONContent): void {
+    // Base implementation does nothing
+  }
+
+  visitText(node: JSONContent): void {
+    // Base implementation does nothing
+  }
 
   getItems(): T[] {
     return this.items;
   }
 
-  protected reset(): void {
+  clearItems(): void {
     this.items = [];
   }
 }
