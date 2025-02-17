@@ -1,5 +1,5 @@
 {
-  "name": "tiptap-utils",
+  "name": "@tugkanpilka/tiptap-utils",
   "version": "1.0.1",
   "description": "A utils directory for tiptap editor.",
   "main": "dist/index.js",
