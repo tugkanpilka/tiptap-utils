@@ -1,0 +1,57 @@
+{
+  "name": "tiptap-utils",
+  "version": "1.0.1",
+  "description": "A utils directory for tiptap editor.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [
+    "tiptap",
+    "editor",
+    "utils",
+    "prosemirror"
+  ],
+  "author": "tugkanpilka@gmail.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tugkanpilka/tiptap-utils.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tugkanpilka/tiptap-utils/issues"
+  },
+  "homepage": "https://github.com/tugkanpilka/tiptap-utils#readme",
+  "peerDependencies": {
+    "@tiptap/core": "^2.0.0",
+    "@tiptap/pm": "^2.0.0",
+    "@tiptap/extension-task-item": "^2.0.0",
+    "@tiptap/extension-task-list": "^2.0.0",
+    "@tiptap/react": "^2.0.0"
+  },
+  "devDependencies": {
+    "@tiptap/core": "^2.0.0",
+    "@tiptap/pm": "^2.0.0",
+    "@tiptap/extension-task-item": "^2.0.0",
+    "@tiptap/extension-task-list": "^2.0.0",
+    "@tiptap/react": "^2.0.0",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "prettier": "^3.0.0",
+    "ts-jest": "^29.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
