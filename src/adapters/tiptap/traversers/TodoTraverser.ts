@@ -5,6 +5,11 @@ import { BaseContentVisitor } from "../visitors/BaseContentVisitor";
 import { BaseContentTraverser } from "./BaseContentTraverser";
 
 export class TodoTraverser extends BaseContentTraverser {
+  traverse(content: JSONContent, visitor: BaseContentVisitor<any>): void {
+    visitor.clearItems();
+    super.traverse(content, visitor);
+  }
+
   protected visitNode(
     node: JSONContent,
     visitor: BaseContentVisitor<any>
