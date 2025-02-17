@@ -5,13 +5,15 @@ import { ContentType, Todo } from "../../../domain/types";
 
 export class TodoVisitor extends BaseContentVisitor<Todo> {
   private currentTodo: Partial<Todo> | null = null;
+  private isFinalized: boolean = false;
 
   visitTaskList(node: JSONContent): void {
-    // Start a new todo item when we encounter a task list
+    // Reset state for new task list
     this.currentTodo = {
       type: ContentType.TODO,
       isCompleted: false,
     };
+    this.isFinalized = false;
   }
 
   visitTaskItem(node: JSONContent): void {
@@ -24,11 +26,11 @@ export class TodoVisitor extends BaseContentVisitor<Todo> {
   }
 
   visitText(node: JSONContent): void {
-    if (this.currentTodo && node.text) {
+    if (this.currentTodo && node.text && !this.isFinalized) {
       this.currentTodo.content = node.text;
       this.currentTodo.id = this.generateId();
       this.items.push(this.currentTodo as Todo);
-      this.currentTodo = null;
+      this.isFinalized = true;
     }
   }
 
