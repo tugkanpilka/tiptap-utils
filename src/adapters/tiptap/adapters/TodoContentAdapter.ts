@@ -1,8 +1,64 @@
 import { TiptapContentAdapter } from "../TiptapContentAdapter";
-import { Todo } from "../../../domain/types";
+import {
+  Todo,
+  TodoGroup,
+  TodoGroupOptions,
+  GroupByField,
+} from "../../../domain/types";
 import { GroupedTodos, FileContents } from "./types";
+import { DateGroupingStrategy } from "../strategies/grouping/DateGroupingStrategy";
+import { HeadingGroupingStrategy } from "../strategies/grouping/HeadingGroupingStrategy";
+import { groupItems } from "../utils/grouping";
+import {
+  NodeTraversalStrategy,
+  ContentFilter,
+  NodeCreationStrategy,
+} from "../../types";
+import { TodoTraverser } from "../traversers/TodoTraverser";
+import { TodoVisitor } from "../visitors/TodoVisitor";
+import {
+  ContentValidator,
+  TiptapContentValidator,
+} from "../validation/ContentValidator";
+import { DefaultNodeCreationStrategy } from "../strategies/DefaultNodeCreationStrategy";
 
 export class TodoContentAdapter extends TiptapContentAdapter<Todo> {
+  protected items: Todo[] = [];
+
+  constructor(
+    traverser: TodoTraverser = new TodoTraverser(),
+    visitor: TodoVisitor = new TodoVisitor(),
+    nodeStrategies: NodeCreationStrategy[] = [
+      new DefaultNodeCreationStrategy(),
+    ],
+    filters: ContentFilter<Todo>[] = [],
+    validator: ContentValidator = new TiptapContentValidator()
+  ) {
+    super(traverser, visitor, nodeStrategies, filters, validator);
+  }
+
+  // Initialize strategies
+  private readonly groupingStrategies = {
+    date: new DateGroupingStrategy(),
+    heading: new HeadingGroupingStrategy(),
+  };
+
+  /**
+   * Adds a todo item to the adapter's items list
+   * @param todo The todo item to add
+   */
+  addItem(todo: Todo): void {
+    this.items.push(todo);
+  }
+
+  /**
+   * Gets all todo items
+   * @returns Array of todos
+   */
+  getItems(): Todo[] {
+    return this.items;
+  }
+
   /**
    * Extracts todos from content after validation and parsing
    * @param content Raw content string
@@ -15,6 +71,18 @@ export class TodoContentAdapter extends TiptapContentAdapter<Todo> {
     }
 
     return this.extract(validatedContent);
+  }
+
+  /**
+   * Groups todos by specified fields (date and/or heading)
+   * @param options Grouping options containing fields to group by
+   * @returns Array of todo groups
+   */
+  groupBy(options: TodoGroupOptions): TodoGroup[] {
+    return groupItems(this.items, {
+      fields: options.fields,
+      strategies: this.groupingStrategies,
+    });
   }
 
   /**

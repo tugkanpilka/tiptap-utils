@@ -1,28 +1,12 @@
 import { JSONContent } from "@tiptap/core";
 import { TaskList } from "@tiptap/extension-task-list";
 import { BaseContentVisitor } from "./BaseContentVisitor";
-import {
-  ContentType,
-  Todo,
-  Heading,
-  TodoGroup,
-  TodoGroupOptions,
-  GroupByField,
-} from "../../../domain/types";
-import { DateGroupingStrategy } from "../strategies/grouping/DateGroupingStrategy";
-import { HeadingGroupingStrategy } from "../strategies/grouping/HeadingGroupingStrategy";
-import { groupItems } from "../utils/grouping";
+import { ContentType, Todo, Heading } from "../../../domain/types";
 
 export class TodoVisitor extends BaseContentVisitor<Todo> {
   private currentTodo: Partial<Todo> | null = null;
   private contentParts: string[] = [];
   private currentHeading: Heading | null = null;
-
-  // Initialize strategies
-  private readonly groupingStrategies = {
-    date: new DateGroupingStrategy(),
-    heading: new HeadingGroupingStrategy(),
-  };
 
   visitTaskList(node: JSONContent): void {
     console.log("[TodoVisitor] Visiting TaskList:", node);
@@ -171,17 +155,5 @@ export class TodoVisitor extends BaseContentVisitor<Todo> {
    */
   addItem(todo: Todo): void {
     this.items.push(todo);
-  }
-
-  /**
-   * Groups todos by specified fields (date and/or heading)
-   * @param options Grouping options containing fields to group by
-   * @returns Array of todo groups
-   */
-  groupBy(options: TodoGroupOptions): TodoGroup[] {
-    return groupItems(this.items, {
-      fields: options.fields,
-      strategies: this.groupingStrategies,
-    });
   }
 }
