@@ -35,3 +35,35 @@ export interface Heading extends ContentItem {
   type: ContentType.HEADING;
   level: number;
 }
+
+export type GroupByField = "date" | "heading";
+
+export interface GroupKey {
+  value: string;
+  sortValue: string | number;
+}
+
+export interface GroupingStrategy<T, K extends GroupByField> {
+  getGroupKey(item: T, field: K): GroupKey | null;
+  createGroup(items: T[]): TodoGroup;
+  compareGroups(a: TodoGroup, b: TodoGroup): number;
+}
+
+export interface GroupingOptions<T, K extends GroupByField> {
+  fields: K[];
+  strategies: Record<K, GroupingStrategy<T, K>>;
+}
+
+export interface TodoGroup {
+  date?: string;
+  heading?: {
+    id: string;
+    content: string;
+    level: number;
+  };
+  todos: Todo[];
+}
+
+export interface TodoGroupOptions {
+  fields: GroupByField[];
+}
