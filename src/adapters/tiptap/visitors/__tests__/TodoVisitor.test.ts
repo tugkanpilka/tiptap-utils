@@ -2,6 +2,7 @@ import { TodoVisitor } from "../TodoVisitor";
 import { TaskItem } from "@tiptap/extension-task-item";
 import { TaskList } from "@tiptap/extension-task-list";
 import { ContentType } from "../../../../domain/types";
+import { JSONContent } from "@tiptap/core";
 
 describe("TodoVisitor", () => {
   let visitor: TodoVisitor;
@@ -14,121 +15,324 @@ describe("TodoVisitor", () => {
     visitor.clearItems();
   });
 
-  describe("visitTaskList", () => {
-    it("should initialize a new todo item", () => {
-      visitor.visitTaskList({
+  describe("Basic Todo Operations", () => {
+    it("should create a simple todo item with text content", () => {
+      // Simulate the structure: TaskList -> TaskItem -> Paragraph -> Text
+      const taskList: JSONContent = {
         type: TaskList.name,
-      } as any);
+        content: [
+          {
+            type: TaskItem.name,
+            attrs: { checked: false },
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: "Simple todo item",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
 
-      visitor.visitText({
-        type: "text",
-        text: "Test todo",
-      } as any);
+      visitor.visitTaskList(taskList);
+      visitor.visitTaskItem(taskList.content![0]);
+      visitor.visitText(taskList.content![0].content![0].content![0]);
 
       const todos = visitor.getItems();
       expect(todos).toHaveLength(1);
-      expect(todos[0].type).toBe(ContentType.TODO);
-      expect(todos[0].content).toBe("Test todo");
-      expect(todos[0].isCompleted).toBe(false);
+      expect(todos[0]).toMatchObject({
+        type: ContentType.TODO,
+        content: "Simple todo item",
+        isCompleted: false,
+      });
+    });
+
+    it("should handle todo item with metadata", () => {
+      const taskList: JSONContent = {
+        type: TaskList.name,
+        content: [
+          {
+            type: TaskItem.name,
+            attrs: {
+              checked: true,
+              metadata: {
+                priority: "high",
+                dueDate: "2024-03-01",
+              },
+            },
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: "Todo with metadata",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      visitor.visitTaskList(taskList);
+      visitor.visitTaskItem(taskList.content![0]);
+      visitor.visitText(taskList.content![0].content![0].content![0]);
+
+      const todos = visitor.getItems();
+      expect(todos).toHaveLength(1);
+      expect(todos[0]).toMatchObject({
+        isCompleted: true,
+        content: "Todo with metadata",
+        metadata: {
+          priority: "high",
+          dueDate: "2024-03-01",
+        },
+      });
     });
   });
 
-  describe("visitTaskItem", () => {
-    it("should set todo completion status and metadata", () => {
-      visitor.visitTaskList({
+  describe("Complex Content Structures", () => {
+    it("should handle todo item with nested ordered list", () => {
+      const taskList: JSONContent = {
         type: TaskList.name,
-      } as any);
-
-      visitor.visitTaskItem({
-        type: TaskItem.name,
-        attrs: {
-          checked: true,
-          metadata: {
-            priority: "high",
+        content: [
+          {
+            type: TaskItem.name,
+            attrs: { checked: false },
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: "Main todo text",
+                  },
+                ],
+              },
+              {
+                type: "orderedList",
+                content: [
+                  {
+                    type: "listItem",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [
+                          {
+                            type: "text",
+                            text: "First sub-item",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    type: "listItem",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [
+                          {
+                            type: "text",
+                            text: "Second sub-item",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
           },
-        },
-      } as any);
+        ],
+      };
 
-      visitor.visitText({
-        type: "text",
-        text: "Test todo",
-      } as any);
+      visitor.visitTaskList(taskList);
+      visitor.visitTaskItem(taskList.content![0]);
+
+      // Manually traverse the structure to simulate the traverser
+      const taskItem = taskList.content![0];
+      visitor.visitText(taskItem.content![0].content![0]); // Main text
+
+      // Visit ordered list items
+      const orderedList = taskItem.content![1];
+      orderedList.content?.forEach((listItem) => {
+        listItem.content?.forEach((paragraph) => {
+          paragraph.content?.forEach((text) => {
+            visitor.visitText(text);
+          });
+        });
+      });
 
       const todos = visitor.getItems();
       expect(todos).toHaveLength(1);
-      expect(todos[0]).toEqual(
-        expect.objectContaining({
-          type: ContentType.TODO,
-          content: "Test todo",
-          isCompleted: true,
-          metadata: {
-            priority: "high",
-          },
-        })
+      expect(todos[0].content).toBe(
+        "Main todo text First sub-item Second sub-item"
       );
-      expect(todos[0].id).toBeDefined();
     });
 
-    it("should handle task item without metadata", () => {
-      visitor.visitTaskList({
+    it("should handle multiple paragraphs in a todo item", () => {
+      const taskList: JSONContent = {
         type: TaskList.name,
-      } as any);
+        content: [
+          {
+            type: TaskItem.name,
+            attrs: { checked: false },
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: "First paragraph",
+                  },
+                ],
+              },
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: "Second paragraph",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
 
-      visitor.visitTaskItem({
-        type: TaskItem.name,
-        attrs: {
-          checked: false,
-        },
-      } as any);
+      visitor.visitTaskList(taskList);
+      visitor.visitTaskItem(taskList.content![0]);
 
-      visitor.visitText({
-        type: "text",
-        text: "Test todo",
-      } as any);
+      const taskItem = taskList.content![0];
+      taskItem.content?.forEach((paragraph) => {
+        paragraph.content?.forEach((text) => {
+          visitor.visitText(text);
+        });
+      });
 
       const todos = visitor.getItems();
       expect(todos).toHaveLength(1);
-      expect(todos[0]).toEqual(
-        expect.objectContaining({
-          type: ContentType.TODO,
-          content: "Test todo",
-          isCompleted: false,
-        })
-      );
-      expect(todos[0].id).toBeDefined();
+      expect(todos[0].content).toBe("First paragraph Second paragraph");
     });
   });
 
-  describe("visitText", () => {
-    it("should not create todo without task list context", () => {
-      visitor.visitText({
-        type: "text",
-        text: "Test todo",
-      } as any);
-
-      expect(visitor.getItems()).toHaveLength(0);
-    });
-
-    it("should finalize todo item with text content", () => {
-      visitor.visitTaskList({
+  describe("Edge Cases", () => {
+    it("should handle empty content", () => {
+      const taskList: JSONContent = {
         type: TaskList.name,
-      } as any);
+        content: [
+          {
+            type: TaskItem.name,
+            attrs: { checked: false },
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: "",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
 
-      visitor.visitTaskItem({
-        type: TaskItem.name,
-        attrs: {
-          checked: false,
-        },
-      } as any);
-
-      visitor.visitText({
-        type: "text",
-        text: "Test todo",
-      } as any);
+      visitor.visitTaskList(taskList);
+      visitor.visitTaskItem(taskList.content![0]);
+      visitor.visitText(taskList.content![0].content![0].content![0]);
 
       const todos = visitor.getItems();
       expect(todos).toHaveLength(1);
-      expect(todos[0].content).toBe("Test todo");
+      expect(todos[0].content).toBe("");
+    });
+
+    it("should handle missing content array", () => {
+      const taskList: JSONContent = {
+        type: TaskList.name,
+        content: [
+          {
+            type: TaskItem.name,
+            attrs: { checked: false },
+          },
+        ],
+      };
+
+      visitor.visitTaskList(taskList);
+      visitor.visitTaskItem(taskList.content![0]);
+
+      const todos = visitor.getItems();
+      expect(todos).toHaveLength(0);
+    });
+  });
+
+  describe("Multiple Todos", () => {
+    it("should handle multiple todo items in a task list", () => {
+      const taskList: JSONContent = {
+        type: TaskList.name,
+        content: [
+          {
+            type: TaskItem.name,
+            attrs: { checked: false },
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: "First todo",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: TaskItem.name,
+            attrs: { checked: true },
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: "Second todo",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      visitor.visitTaskList(taskList);
+
+      // Visit first todo
+      visitor.visitTaskItem(taskList.content![0]);
+      visitor.visitText(taskList.content![0].content![0].content![0]);
+
+      // Visit second todo
+      visitor.visitTaskItem(taskList.content![1]);
+      visitor.visitText(taskList.content![1].content![0].content![0]);
+
+      const todos = visitor.getItems();
+      expect(todos).toHaveLength(2);
+      expect(todos[0]).toMatchObject({
+        content: "First todo",
+        isCompleted: false,
+      });
+      expect(todos[1]).toMatchObject({
+        content: "Second todo",
+        isCompleted: true,
+      });
     });
   });
 });
