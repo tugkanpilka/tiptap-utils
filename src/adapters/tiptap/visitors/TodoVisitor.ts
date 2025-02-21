@@ -23,36 +23,27 @@ export class TodoVisitor extends BaseContentVisitor<Todo> {
   }
 
   private hasEmptyNodesBefore(node: JSONContent): boolean {
-    // Check if the node has a parent and siblings
-    if (!node.parent?.content) return false;
+    const parent = node.parent as JSONContent;
+    if (!parent?.content) return false;
 
-    const nodeIndex = node.parent.content.findIndex(
-      (n: JSONContent) => n === node
-    );
+    const nodeIndex = parent.content.indexOf(node);
     if (nodeIndex <= 0) return false;
 
-    // Check previous sibling for empty paragraph
-    const prevSibling = node.parent.content[nodeIndex - 1];
-    return (
-      prevSibling?.type === "paragraph" &&
-      (!prevSibling.content || prevSibling.content.length === 0)
-    );
+    return parent.content
+      .slice(0, nodeIndex)
+      .every((n) => !n.content || n.content.length === 0);
   }
 
   visitHeading(node: JSONContent): void {
-    console.log("[TodoVisitor] Visiting Heading:", {
-      level: node.attrs?.level,
-      content: node.content,
-    });
-
-    if (node.attrs?.level && node.content?.[0]?.text) {
+    console.log("[TodoVisitor] Visiting Heading:", node);
+    if (node.attrs && node.content && node.content[0]?.type === "text") {
       this.currentHeading = {
         id: this.generateId(),
         type: ContentType.HEADING,
-        content: node.content[0].text,
-        level: node.attrs.level,
+        content: node.content[0].text || "",
+        level: node.attrs.level || 1,
       };
-      console.log("[TodoVisitor] Set Current Heading:", this.currentHeading);
+      console.log("[TodoVisitor] Set current heading:", this.currentHeading);
     }
   }
 
@@ -129,19 +120,22 @@ export class TodoVisitor extends BaseContentVisitor<Todo> {
   }
 
   private processContent(content: JSONContent[]): void {
-    content.forEach((node) => {
-      if (node.type === "text") {
-        this.visitText(node);
-      } else if (node.type === "heading") {
+    for (const node of content) {
+      if (node.type === "heading") {
         this.visitHeading(node);
-      } else if (node.type === "paragraph" && node.content) {
-        this.processContent(node.content);
-      } else if (node.type === "orderedList" && node.content) {
-        this.processContent(node.content);
-      } else if (node.type === "listItem" && node.content) {
+      } else if (node.type === "taskList") {
+        this.visitTaskList(node);
+      } else if (node.type === "taskItem") {
+        this.visitTaskItem(node);
+      } else if (node.type === "text") {
+        this.visitText(node);
+      }
+
+      // Recursively process nested content
+      if (node.content) {
         this.processContent(node.content);
       }
-    });
+    }
   }
 
   private generateId(): string {

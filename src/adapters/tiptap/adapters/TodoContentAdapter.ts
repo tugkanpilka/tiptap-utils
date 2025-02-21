@@ -107,12 +107,16 @@ export class TodoContentAdapter extends TiptapContentAdapter<Todo> {
    * @returns Array of todos with source information
    */
   processFiles(fileContents: FileContents): Todo[] {
-    return Object.entries(fileContents)
+    const todos = Object.entries(fileContents)
       .filter(([_, content]) => content !== null)
       .flatMap(([date, content]) => {
         const todos = this.validateAndExtract(content);
         return this.addSourceInfo(todos, date);
       });
+
+    // Update the items array
+    this.items = todos;
+    return todos;
   }
 
   /**

@@ -15,6 +15,9 @@ export class TodoTraverser extends BaseContentTraverser {
     visitor: BaseContentVisitor<any>
   ): void {
     switch (node.type) {
+      case "heading":
+        visitor.visitHeading(node);
+        break;
       case TaskList.name:
         visitor.visitTaskList(node);
         break;

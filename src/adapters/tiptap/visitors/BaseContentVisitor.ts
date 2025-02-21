@@ -19,6 +19,10 @@ export abstract class BaseContentVisitor<T extends ContentItem>
     // Base implementation does nothing
   }
 
+  visitHeading(node: JSONContent): void {
+    // Base implementation does nothing
+  }
+
   getItems(): T[] {
     return this.items;
   }

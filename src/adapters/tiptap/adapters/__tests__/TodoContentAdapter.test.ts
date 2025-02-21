@@ -196,4 +196,99 @@ describe("TodoContentAdapter", () => {
       });
     });
   });
+
+  describe("File Processing and Grouping", () => {
+    it("should process files and group todos correctly", () => {
+      const fileContents = {
+        "2024-03-20": JSON.stringify({
+          type: "doc",
+          content: [
+            {
+              type: "heading",
+              attrs: { level: 2 },
+              content: [{ type: "text", text: "Docbook" }],
+            },
+            {
+              type: "taskList",
+              content: [
+                {
+                  type: "taskItem",
+                  attrs: { checked: false },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Test todo 1" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+        "2024-03-21": JSON.stringify({
+          type: "doc",
+          content: [
+            {
+              type: "heading",
+              attrs: { level: 2 },
+              content: [{ type: "text", text: "Mülakatlar" }],
+            },
+            {
+              type: "taskList",
+              content: [
+                {
+                  type: "taskItem",
+                  attrs: { checked: false },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Test todo 2" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+      };
+
+      // Process files
+      const todos = adapter.processFiles(fileContents);
+      expect(todos).toHaveLength(2);
+
+      // Group by date and heading
+      const groups = adapter.groupBy({ fields: ["date", "heading"] });
+      expect(groups).toHaveLength(2);
+
+      // Check first group
+      expect(groups[0]).toMatchObject({
+        date: "2024-03-20",
+        heading: {
+          content: "Docbook",
+          level: 2,
+        },
+        todos: [
+          {
+            content: "Test todo 1",
+            isCompleted: false,
+          },
+        ],
+      });
+
+      // Check second group
+      expect(groups[1]).toMatchObject({
+        date: "2024-03-21",
+        heading: {
+          content: "Mülakatlar",
+          level: 2,
+        },
+        todos: [
+          {
+            content: "Test todo 2",
+            isCompleted: false,
+          },
+        ],
+      });
+    });
+  });
 });
